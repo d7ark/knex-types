@@ -14,7 +14,12 @@ export declare type Options = {
    *     "identity_provider.linkedin": "LinkedIn"
    *   }
    */
-  overrides?: Record<string, string>;
+  overrides?: Record<string, string> & {
+    $table?: (name: string, schema: string) => string;
+    $column?: (name: string, table: string, type: string) => string;
+    $enum?: (name: string, schema: string) => string;
+    $enumValue?: (name: string, enumName: string) => string;
+  };
   prefix?: string;
   suffix?: string;
   /**

@@ -24,6 +24,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 async function updateTypes(db, options) {
   var _options$overrides, _ref, _ref2;
 
+  const defaultFormatter = {
+    column: name => name,
+    enum: name => (0, _upperFirst2.default)((0, _camelCase2.default)(name)),
+    enumValue: name => (0, _upperFirst2.default)((0, _camelCase2.default)(name.replace(/[.-]/g, "_"))),
+    table: name => (0, _upperFirst2.default)((0, _camelCase2.default)(name))
+  };
   const overrides = (_options$overrides = options.overrides) !== null && _options$overrides !== void 0 ? _options$overrides : {};
   const output = typeof options.output === "string" ? _fs.default.createWriteStream(options.output, {
     encoding: "utf-8"
@@ -45,18 +51,18 @@ async function updateTypes(db, options) {
     const enums = await db.table("pg_type").join("pg_enum", "pg_enum.enumtypid", "pg_type.oid").orderBy("pg_type.typname").orderBy("pg_enum.enumsortorder").select("pg_type.typname as key", "pg_enum.enumlabel as value"); // Construct TypeScript enum types
 
     enums.forEach((x, i) => {
-      var _overrides$;
+      var _ref4, _overrides$, _overrides$$enumValue;
 
       // The first line of enum declaration
       if (!(enums[i - 1] && enums[i - 1].key === x.key)) {
-        var _overrides$x$key;
+        var _ref3, _overrides$x$key, _overrides$$enum;
 
-        const enumName = (_overrides$x$key = overrides[x.key]) !== null && _overrides$x$key !== void 0 ? _overrides$x$key : (0, _upperFirst2.default)((0, _camelCase2.default)(x.key));
+        const enumName = (_ref3 = (_overrides$x$key = overrides[x.key]) !== null && _overrides$x$key !== void 0 ? _overrides$x$key : (_overrides$$enum = overrides["$enum"]) === null || _overrides$$enum === void 0 ? void 0 : _overrides$$enum.call(overrides, x.key, "")) !== null && _ref3 !== void 0 ? _ref3 : defaultFormatter.enum(x.key);
         output.write(`export enum ${enumName} {\n`);
       } // Enum body
 
 
-      const key = (_overrides$ = overrides[`${x.key}.${x.value}`]) !== null && _overrides$ !== void 0 ? _overrides$ : (0, _upperFirst2.default)((0, _camelCase2.default)(x.value.replace(/[.-]/g, "_")));
+      const key = (_ref4 = (_overrides$ = overrides[`${x.key}.${x.value}`]) !== null && _overrides$ !== void 0 ? _overrides$ : (_overrides$$enumValue = overrides["$enumValue"]) === null || _overrides$$enumValue === void 0 ? void 0 : _overrides$$enumValue.call(overrides, x.value, x.key)) !== null && _ref4 !== void 0 ? _ref4 : defaultFormatter.enumValue(x.value);
       output.write(`  ${key} = "${x.value}",\n`); // The closing line
 
       if (!(enums[i + 1] && enums[i + 1].key === x.key)) {
@@ -64,9 +70,9 @@ async function updateTypes(db, options) {
       }
     });
     const enumsMap = new Map(enums.map(x => {
-      var _overrides$x$key2;
+      var _ref5, _overrides$x$key2, _overrides$$enum2;
 
-      return [x.key, (_overrides$x$key2 = overrides[x.key]) !== null && _overrides$x$key2 !== void 0 ? _overrides$x$key2 : (0, _upperFirst2.default)((0, _camelCase2.default)(x.key))];
+      return [x.key, (_ref5 = (_overrides$x$key2 = overrides[x.key]) !== null && _overrides$x$key2 !== void 0 ? _overrides$x$key2 : (_overrides$$enum2 = overrides["$enum"]) === null || _overrides$$enum2 === void 0 ? void 0 : _overrides$$enum2.call(overrides, x.key, "")) !== null && _ref5 !== void 0 ? _ref5 : defaultFormatter.enum(x.key)];
     })); // Fetch the list of tables/columns
 
     const columns = await db.withSchema("information_schema").table("columns").whereIn("table_schema", includeSchemas).whereNotIn("table_schema", excludeSchemas).whereNotIn("table_name", exclude).orderBy("table_schema").orderBy("table_name").orderBy("ordinal_position").select("table_schema as schema", "table_name as table", "column_name as column", db.raw("(is_nullable = 'YES') as nullable"), "column_default as default", "data_type as type", "udt_name as udt"); // The list of database tables as enum
@@ -77,19 +83,30 @@ async function updateTypes(db, options) {
       return `${schema}${x.table}`;
     }));
     Array.from(tableSet).forEach(value => {
-      var _overrides$value;
+      var _ref6, _overrides$value, _overrides$$table;
 
-      const key = (_overrides$value = overrides[value]) !== null && _overrides$value !== void 0 ? _overrides$value : (0, _upperFirst2.default)((0, _camelCase2.default)(value));
+      const key = (_ref6 = (_overrides$value = overrides[value]) !== null && _overrides$value !== void 0 ? _overrides$value : (_overrides$$table = overrides["$table"]) === null || _overrides$$table === void 0 ? void 0 : _overrides$$table.call(overrides, value, "")) !== null && _ref6 !== void 0 ? _ref6 : defaultFormatter.table(value);
       output.write(`  ${key} = "${value}",\n`);
     });
-    output.write("}\n\n"); // Construct TypeScript db record types
+    output.write("}\n\n"); // The list of tables as type
+
+    output.write("export type Tables = {\n");
+    Array.from(tableSet).forEach(key => {
+      var _overrides$key;
+
+      const value = (_overrides$key = overrides[key]) !== null && _overrides$key !== void 0 ? _overrides$key : (0, _upperFirst2.default)((0, _camelCase2.default)(key));
+      output.write(`  "${key}": ${value},\n`);
+    });
+    output.write("};\n\n"); // Construct TypeScript db record types
 
     columns.forEach((x, i) => {
-      if (!(columns[i - 1] && columns[i - 1].table === x.table)) {
-        var _overrides$x$table;
+      var _ref8, _overrides$x$column, _overrides$$column;
 
-        const tableName = (_overrides$x$table = overrides[x.table]) !== null && _overrides$x$table !== void 0 ? _overrides$x$table : (0, _upperFirst2.default)((0, _camelCase2.default)(x.table));
-        const schemaName = x.schema !== "public" ? (0, _upperFirst2.default)((0, _camelCase2.default)(x.schema)) : "";
+      if (!(columns[i - 1] && columns[i - 1].table === x.table)) {
+        var _ref7, _overrides$x$table, _overrides$$table2;
+
+        const tableName = (_ref7 = (_overrides$x$table = overrides[x.table]) !== null && _overrides$x$table !== void 0 ? _overrides$x$table : (_overrides$$table2 = overrides["$table"]) === null || _overrides$$table2 === void 0 ? void 0 : _overrides$$table2.call(overrides, x.table, x.schema)) !== null && _ref7 !== void 0 ? _ref7 : defaultFormatter.table(x.table);
+        const schemaName = x.schema !== "public" ? defaultFormatter.table(x.schema) : "";
         output.write(`export type ${schemaName}${tableName} = {\n`);
       }
 
@@ -99,7 +116,8 @@ async function updateTypes(db, options) {
         type += " | null";
       }
 
-      output.write(`  ${sanitize(x.column)}: ${type};\n`);
+      const columnName = (_ref8 = (_overrides$x$column = overrides[x.column]) !== null && _overrides$x$column !== void 0 ? _overrides$x$column : (_overrides$$column = overrides["$column"]) === null || _overrides$$column === void 0 ? void 0 : _overrides$$column.call(overrides, x.column, x.table, type)) !== null && _ref8 !== void 0 ? _ref8 : defaultFormatter.column(x.column);
+      output.write(`  ${sanitize(columnName)}: ${type};\n`);
 
       if (!(columns[i + 1] && columns[i + 1].table === x.table)) {
         output.write("};\n\n");
