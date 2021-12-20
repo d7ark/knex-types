@@ -185,10 +185,12 @@ export async function updateTypes(db: Knex, options: Options): Promise<void> {
     Array.from(tableSet).forEach((key) => {
       const value =
         overrides[key] ??
-        (overrides["$table"]?.(key, "") && defaultFormatter.table(key));
+        overrides["$table"]?.(key, "") ??
+        defaultFormatter.table(key);
       const column =
         overrides[key] ??
-        (overrides["$column"]?.(key, key, "") && defaultFormatter.column(key));
+        overrides["$column"]?.(key, key, "") ??
+        defaultFormatter.column(key);
       output.write(`  "${column}": ${value},\n`);
     });
     output.write("};\n\n");

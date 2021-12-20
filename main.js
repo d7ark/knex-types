@@ -92,21 +92,21 @@ async function updateTypes(db, options) {
 
     output.write("export type Tables = {\n");
     Array.from(tableSet).forEach(key => {
-      var _overrides$key, _overrides$$table2, _overrides$key2, _overrides$$column;
+      var _ref7, _overrides$key, _overrides$$table2, _ref8, _overrides$key2, _overrides$$column;
 
-      const value = (_overrides$key = overrides[key]) !== null && _overrides$key !== void 0 ? _overrides$key : ((_overrides$$table2 = overrides["$table"]) === null || _overrides$$table2 === void 0 ? void 0 : _overrides$$table2.call(overrides, key, "")) && defaultFormatter.table(key);
-      const column = (_overrides$key2 = overrides[key]) !== null && _overrides$key2 !== void 0 ? _overrides$key2 : ((_overrides$$column = overrides["$column"]) === null || _overrides$$column === void 0 ? void 0 : _overrides$$column.call(overrides, key, key, "")) && defaultFormatter.column(key);
+      const value = (_ref7 = (_overrides$key = overrides[key]) !== null && _overrides$key !== void 0 ? _overrides$key : (_overrides$$table2 = overrides["$table"]) === null || _overrides$$table2 === void 0 ? void 0 : _overrides$$table2.call(overrides, key, "")) !== null && _ref7 !== void 0 ? _ref7 : defaultFormatter.table(key);
+      const column = (_ref8 = (_overrides$key2 = overrides[key]) !== null && _overrides$key2 !== void 0 ? _overrides$key2 : (_overrides$$column = overrides["$column"]) === null || _overrides$$column === void 0 ? void 0 : _overrides$$column.call(overrides, key, key, "")) !== null && _ref8 !== void 0 ? _ref8 : defaultFormatter.column(key);
       output.write(`  "${column}": ${value},\n`);
     });
     output.write("};\n\n"); // Construct TypeScript db record types
 
     columns.forEach((x, i) => {
-      var _ref8, _overrides$x$column, _overrides$$column2;
+      var _ref10, _overrides$x$column, _overrides$$column2;
 
       if (!(columns[i - 1] && columns[i - 1].table === x.table)) {
-        var _ref7, _overrides$x$table, _overrides$$table3;
+        var _ref9, _overrides$x$table, _overrides$$table3;
 
-        const tableName = (_ref7 = (_overrides$x$table = overrides[x.table]) !== null && _overrides$x$table !== void 0 ? _overrides$x$table : (_overrides$$table3 = overrides["$table"]) === null || _overrides$$table3 === void 0 ? void 0 : _overrides$$table3.call(overrides, x.table, x.schema)) !== null && _ref7 !== void 0 ? _ref7 : defaultFormatter.table(x.table);
+        const tableName = (_ref9 = (_overrides$x$table = overrides[x.table]) !== null && _overrides$x$table !== void 0 ? _overrides$x$table : (_overrides$$table3 = overrides["$table"]) === null || _overrides$$table3 === void 0 ? void 0 : _overrides$$table3.call(overrides, x.table, x.schema)) !== null && _ref9 !== void 0 ? _ref9 : defaultFormatter.table(x.table);
         const schemaName = x.schema !== "public" ? defaultFormatter.table(x.schema) : "";
         output.write(`export type ${schemaName}${tableName} = {\n`);
       }
@@ -117,7 +117,7 @@ async function updateTypes(db, options) {
         type += " | null";
       }
 
-      const columnName = (_ref8 = (_overrides$x$column = overrides[x.column]) !== null && _overrides$x$column !== void 0 ? _overrides$x$column : (_overrides$$column2 = overrides["$column"]) === null || _overrides$$column2 === void 0 ? void 0 : _overrides$$column2.call(overrides, x.column, x.table, type)) !== null && _ref8 !== void 0 ? _ref8 : defaultFormatter.column(x.column);
+      const columnName = (_ref10 = (_overrides$x$column = overrides[x.column]) !== null && _overrides$x$column !== void 0 ? _overrides$x$column : (_overrides$$column2 = overrides["$column"]) === null || _overrides$$column2 === void 0 ? void 0 : _overrides$$column2.call(overrides, x.column, x.table, type)) !== null && _ref10 !== void 0 ? _ref10 : defaultFormatter.column(x.column);
       output.write(`  ${sanitize(columnName)}: ${type};\n`);
 
       if (!(columns[i + 1] && columns[i + 1].table === x.table)) {
