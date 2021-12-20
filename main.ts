@@ -183,8 +183,13 @@ export async function updateTypes(db: Knex, options: Options): Promise<void> {
     // The list of tables as type
     output.write("export type Tables = {\n");
     Array.from(tableSet).forEach((key) => {
-      const value = overrides[key] ?? upperFirst(camelCase(key));
-      output.write(`  "${key}": ${value},\n`);
+      const value =
+        overrides[key] ??
+        (overrides["$table"]?.(key, "") && defaultFormatter.table(key));
+      const column =
+        overrides[key] ??
+        (overrides["$column"]?.(key, key, "") && defaultFormatter.column(key));
+      output.write(`  "${column}": ${value},\n`);
     });
     output.write("};\n\n");
 
