@@ -2,7 +2,7 @@
 /* SPDX-License-Identifier: MIT */
 
 import { knex } from "knex";
-import { camelCase, snakeCase, upperFirst } from "lodash";
+import { camelCase, upperFirst } from "lodash";
 import { PassThrough } from "stream";
 import { updateTypes } from "./main";
 
@@ -168,16 +168,17 @@ test("updateTypes", async function () {
   `);
 });
 
-test("updateTypes with formatters", async function () {
+test("updateTypes with custom overrides functions", async function () {
   const output = new PassThrough();
 
   await updateTypes(db, {
     output,
-    formatters: {
-      column: (name) => upperFirst(camelCase(name)),
-      enum: (name) => name, // disable default
-      enumEl: (name) => snakeCase(name).toUpperCase(),
-      table: (name) => `prefix${upperFirst(name)}`,
+    overrides: {
+      "identity_provider.linkedin": "LinkedIn",
+      $enum: (name) => name, // disable default
+      $column: (name) => upperFirst(camelCase(name)),
+      // use default for enumValues
+      $table: (name) => `prefix${upperFirst(name)}`,
     },
   });
 
@@ -186,9 +187,9 @@ test("updateTypes with formatters", async function () {
 // Do not touch them, or risk, your modifications being lost.
 
 export enum identity_provider {
-  GOOGLE = \\"google\\",
-  FACEBOOK = \\"facebook\\",
-  LINKEDIN = \\"linkedin\\",
+  Google = \\"google\\",
+  Facebook = \\"facebook\\",
+  LinkedIn = \\"linkedin\\",
 }
 
 export enum Table {

@@ -135,8 +135,14 @@ export async function updateTypes(db: Knex, options: Options): Promise<void> {
       }
     });
 
-    const enumsMap = new Map();
-    // enums.map((x) => [x.key, overrides[x.key] ?? formatter.enum(x.key)])
+    const enumsMap = new Map(
+      enums.map((x) => [
+        x.key,
+        overrides[x.key] ??
+          overrides["$enum"]?.(x.key, "") ??
+          defaultFormatter.enum(x.key),
+      ])
+    );
 
     // Fetch the list of tables/columns
     const columns = await db
